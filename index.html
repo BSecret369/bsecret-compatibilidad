@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BSecret · Compatibilidad Astrológica</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #fdfbff;
+      --surface: rgba(194,140,200,0.07);
+      --border: rgba(180,120,200,0.2);
+      --border-hov: rgba(180,120,200,0.5);
+      --amber: #b07ab8;
+      --amber-light: #d4a0dc;
+      --cream-dim: #c8a8d8;
+      --text: #3a2048;
+      --text-muted: #8a6898;
+      --text-dim: #c0a0c8;
+      --accent: #8a5098;
+      --error-bg: rgba(160,60,80,0.1);
+      --error-border: rgba(180,80,100,0.4);
+      --error-text: #c05070;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Crimson Text', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at 20% 20%, rgba(194,140,220,0.08) 0%, transparent 50%),
+                  radial-gradient(ellipse at 80% 80%, rgba(160,100,200,0.06) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .container { max-width: 680px; margin: 0 auto; padding: 48px 24px 80px; position: relative; z-index: 1; }
+    .header { text-align: center; margin-bottom: 48px; }
+    .header-eyebrow { font-size: 10px; letter-spacing: 5px; color: var(--text-dim); text-transform: uppercase; margin-bottom: 16px; }
+    .header-title { font-family: 'Cormorant Garamond', serif; font-size: 52px; font-weight: 300; font-style: italic; color: var(--amber); line-height: 1; margin-bottom: 6px; }
+    .header-subtitle { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 300; font-style: italic; color: var(--cream-dim); margin-bottom: 16px; }
+    .divider { width: 60px; height: 1px; background: linear-gradient(90deg, transparent, var(--amber), transparent); margin: 16px auto; }
+    .stars { display: flex; justify-content: center; gap: 8px; margin: 12px 0; opacity: 0.4; font-size: 10px; letter-spacing: 4px; color: var(--amber); }
+    .header-desc { font-size: 14px; color: var(--text-muted); line-height: 1.8; max-width: 480px; margin: 0 auto; }
+    .price-badge { display: inline-block; background: linear-gradient(135deg, rgba(194,140,220,0.15), rgba(160,100,200,0.1)); border: 1px solid var(--border); border-radius: 30px; padding: 8px 24px; font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--amber); margin-top: 16px; letter-spacing: 1px; }
+    .form-section { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 32px 28px; margin-bottom: 20px; position: relative; overflow: hidden; }
+    .form-section::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--amber-light), transparent); opacity: 0.6; }
+    .section-label { font-size: 10px; letter-spacing: 4px; color: var(--text-dim); text-transform: uppercase; margin-bottom: 20px; text-align: center; }
+    .section-icon { font-size: 20px; text-align: center; margin-bottom: 8px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-grid.full { grid-template-columns: 1fr; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field.span2 { grid-column: 1 / -1; }
+    label { font-size: 10px; letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; }
+    input, select { background: rgba(255,255,255,0.6); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'Crimson Text', serif; font-size: 15px; padding: 11px 14px; outline: none; transition: border-color 0.2s; width: 100%; }
+    input:focus, select:focus { border-color: var(--border-hov); }
+    input::placeholder { color: var(--text-dim); }
+    .connector { text-align: center; margin: 8px 0; font-family: 'Cormorant Garamond', serif; font-size: 22px; font-style: italic; color: var(--amber-light); opacity: 0.7; }
+    .email-section { background: rgba(194,140,220,0.05); border: 1px solid var(--border); border-radius: 16px; padding: 24px 28px; margin-bottom: 20px; }
+    .email-note { font-size: 12px; color: var(--text-muted); margin-top: 8px; font-style: italic; text-align: center; }
+    .btn-primary { background: linear-gradient(135deg, var(--amber-light) 0%, var(--amber) 60%, var(--accent) 100%); border: none; color: white; padding: 16px 32px; border-radius: 10px; font-size: 13px; font-family: 'Cormorant Garamond', serif; letter-spacing: 2px; cursor: pointer; text-transform: uppercase; font-weight: 600; width: 100%; transition: opacity 0.2s, transform 0.2s; }
+    .btn-primary:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--amber); padding: 14px 28px; border-radius: 10px; font-size: 13px; font-family: 'Cormorant Garamond', serif; letter-spacing: 2px; cursor: pointer; text-transform: uppercase; width: 100%; transition: border-color 0.2s; margin-top: 12px; }
+    .btn-secondary:hover { border-color: var(--border-hov); }
+    .loading-state { text-align: center; padding: 60px 0; }
+    .loading-symbol { font-size: 32px; color: var(--amber); animation: pulse 2s infinite; margin-bottom: 20px; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .loading-text { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-style: italic; color: var(--text-muted); margin-bottom: 8px; }
+    .loading-sub { font-size: 12px; color: var(--text-dim); letter-spacing: 1px; }
+    .progress-bar { width: 100%; height: 3px; background: var(--border); border-radius: 2px; margin-top: 20px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--amber-light), var(--accent)); border-radius: 2px; animation: progress 25s linear forwards; }
+    @keyframes progress { from { width: 0%; } to { width: 95%; } }
+    .result-header { text-align: center; margin-bottom: 32px; }
+    .result-title { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 300; font-style: italic; color: var(--amber); margin-bottom: 8px; }
+    .result-names { font-size: 14px; color: var(--text-muted); letter-spacing: 2px; }
+    .result-content { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; margin-bottom: 20px; font-size: 16px; line-height: 1.9; color: var(--text); }
+    .result-content h2 { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-style: italic; color: var(--amber); margin: 24px 0 12px; font-weight: 400; }
+    .result-content h2:first-child { margin-top: 0; }
+    .result-content p { margin-bottom: 12px; }
+    .error-box { background: var(--error-bg); border: 1px solid var(--error-border); border-radius: 10px; padding: 14px 18px; color: var(--error-text); font-size: 14px; margin-bottom: 16px; display: none; }
+    .error-box.visible { display: block; }
+    .footer-note { text-align: center; font-size: 11px; color: var(--text-dim); margin-top: 40px; font-style: italic; }
+    @media (max-width: 500px) { .form-grid { grid-template-columns: 1fr; } .field.span2 { grid-column: 1; } .header-title { font-size: 40px; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div class="header" id="mainHeader">
+      <div class="header-eyebrow">Astrología Psicológica</div>
+      <div class="header-title">BSecret</div>
+      <div class="header-subtitle">Compatibilidad de Almas</div>
+      <div class="divider"></div>
+      <div class="stars">✦ · ✦ · ✦</div>
+      <p class="header-desc">Descubre la sinastría entre dos personas — los vínculos cósmicos, los retos del alma y el potencial de vuestra unión, interpretados desde la psicología profunda.</p>
+      <div class="price-badge">Informe completo · 14,95€</div>
+    </div>
+
+    <div id="formView">
+      <div class="form-section">
+        <div class="section-icon">☽</div>
+        <div class="section-label">Primera persona</div>
+        <div class="form-grid">
+          <div class="field span2">
+            <label>Nombre</label>
+            <input type="text" id="name1" placeholder="Su nombre" />
+          </div>
+          <div class="field">
+            <label>Fecha de nacimiento</label>
+            <input type="date" id="date1" />
+          </div>
+          <div class="field">
+            <label>Hora de nacimiento</label>
+            <input type="time" id="time1" />
+          </div>
+          <div class="field span2">
+            <label>Lugar de nacimiento</label>
+            <input type="text" id="place1" placeholder="Ciudad, País" />
+          </div>
+        </div>
+      </div>
+
+      <div class="connector">&</div>
+
+      <div class="form-section">
+        <div class="section-icon">☀</div>
+        <div class="section-label">Segunda persona</div>
+        <div class="form-grid">
+          <div class="field span2">
+            <label>Nombre</label>
+            <input type="text" id="name2" placeholder="Su nombre" />
+          </div>
+          <div class="field">
+            <label>Fecha de nacimiento</label>
+            <input type="date" id="date2" />
+          </div>
+          <div class="field">
+            <label>Hora de nacimiento</label>
+            <input type="time" id="time2" />
+          </div>
+          <div class="field span2">
+            <label>Lugar de nacimiento</label>
+            <input type="text" id="place2" placeholder="Ciudad, País" />
+          </div>
+        </div>
+      </div>
+
+      <div class="email-section">
+        <div class="form-grid full">
+          <div class="field">
+            <label>Tu email</label>
+            <input type="email" id="email" placeholder="para enviarte el informe" />
+          </div>
+        </div>
+        <p class="email-note">✦ Recibirás novedades de BSecret</p>
+      </div>
+
+      <div class="error-box" id="errorBox"></div>
+
+      <button class="btn-primary" id="generateBtn" onclick="handleGenerate()">
+        Revelar nuestra compatibilidad
+      </button>
+
+      <div class="footer-note">✦ Informe generado al instante · Interpretado con psicología junguiana · Descargable en PDF</div>
+    </div>
+
+    <div id="loadingView" style="display:none;">
+      <div class="loading-state">
+        <div class="loading-symbol">✦</div>
+        <div class="loading-text">Las estrellas están hablando...</div>
+        <div class="loading-sub">Calculando sinastría y aspectos · Esto puede tardar un momento</div>
+        <div class="progress-bar"><div class="progress-fill"></div></div>
+      </div>
+    </div>
+
+    <div id="resultView" style="display:none;">
+      <div class="result-header">
+        <div style="font-size:11px;letter-spacing:4px;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;">Tu informe de compatibilidad</div>
+        <div class="result-title" id="resultTitle"></div>
+        <div class="result-names" id="resultNames"></div>
+        <div class="divider"></div>
+      </div>
+      <div class="result-content" id="resultContent"></div>
+      <button class="btn-primary" onclick="downloadPDF()">✦ Descargar informe en PDF</button>
+      <button class="btn-secondary" onclick="resetForm()">Hacer otro informe</button>
+    </div>
+
+  </div>
+
+  <script>
+    let reportData = null;
+
+    function getSign(dateStr) {
+      if (!dateStr) return '';
+      const [, month, day] = dateStr.split('-').map(Number);
+      const signs = [
+        [1,20,'Capricornio'],[2,19,'Acuario'],[3,20,'Piscis'],[4,20,'Aries'],
+        [5,21,'Tauro'],[6,21,'Géminis'],[7,23,'Cáncer'],[8,23,'Leo'],
+        [9,23,'Virgo'],[10,23,'Libra'],[11,22,'Escorpio'],[12,22,'Sagitario'],[12,31,'Capricornio']
+      ];
+      for (const [m, d, sign] of signs) {
+        if (month < m || (month === m && day <= d)) return sign;
+      }
+      return 'Capricornio';
+    }
+
+    function handleGenerate() {
+      const name1 = document.getElementById('name1').value.trim();
+      const date1 = document.getElementById('date1').value;
+      const time1 = document.getElementById('time1').value;
+      const place1 = document.getElementById('place1').value.trim();
+      const name2 = document.getElementById('name2').value.trim();
+      const date2 = document.getElementById('date2').value;
+      const time2 = document.getElementById('time2').value;
+      const place2 = document.getElementById('place2').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const errorBox = document.getElementById('errorBox');
+
+      if (!name1 || !date1 || !place1 || !name2 || !date2 || !place2 || !email) {
+        errorBox.textContent = 'Por favor, completa todos los campos obligatorios.';
+        errorBox.classList.add('visible');
+        return;
+      }
+
+      errorBox.classList.remove('visible');
+      reportData = { name1, date1, time1, place1, name2, date2, time2, place2, email };
+
+      document.getElementById('formView').style.display = 'none';
+      document.getElementById('loadingView').style.display = 'block';
+
+      generateReport(reportData);
+    }
+
+    async function generateReport(data) {
+      try {
+        const res = await fetch('/api/report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+        if (!result.text) throw new Error('Sin respuesta');
+
+        reportData.reportText = result.text;
+        reportData.sign1 = result.sign1;
+        reportData.sign2 = result.sign2;
+
+        try {
+          await fetch('/api/save-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: data.email, name: data.name1 })
+          });
+        } catch(e) {}
+
+        showResult(result.text, result.sign1, result.sign2);
+
+      } catch(err) {
+        document.getElementById('loadingView').style.display = 'none';
+        document.getElementById('formView').style.display = 'block';
+        const errorBox = document.getElementById('errorBox');
+        errorBox.textContent = 'Ha ocurrido un error. Por favor, inténtalo de nuevo.';
+        errorBox.classList.add('visible');
+      }
+    }
+
+    function formatReportHTML(text) {
+      const parts = text.split(/(## .+)/g);
+      let html = '';
+      for (const part of parts) {
+        if (part.startsWith('## ')) {
+          html += `<h2>${part.replace('## ', '')}</h2>`;
+        } else {
+          const paras = part.trim().split(/\n\n+/);
+          for (const p of paras) {
+            if (p.trim()) html += `<p>${p.trim().replace(/\n/g, '<br/>')}</p>`;
+          }
+        }
+      }
+      return html;
+    }
+
+    function showResult(text, sign1, sign2) {
+      document.getElementById('loadingView').style.display = 'none';
+      document.getElementById('resultView').style.display = 'block';
+      document.getElementById('resultTitle').textContent = `${reportData.name1} & ${reportData.name2}`;
+      document.getElementById('resultNames').textContent = `${sign1} · ${sign2}`;
+      document.getElementById('resultContent').innerHTML = formatReportHTML(text);
+    }
+
+    function downloadPDF() {
+      if (!reportData) return;
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      const margin = 20;
+      const contentW = pageW - margin * 2;
+      let y = margin;
+
+      doc.setFillColor(253, 251, 255);
+      doc.rect(0, 0, pageW, pageH, 'F');
+
+      doc.setDrawColor(176, 122, 184);
+      doc.setLineWidth(0.3);
+      doc.line(margin, y + 8, pageW - margin, y + 8);
+
+      y += 18;
+      doc.setFont('times', 'italic');
+      doc.setFontSize(26);
+      doc.setTextColor(176, 122, 184);
+      doc.text('BSecret', pageW / 2, y, { align: 'center' });
+
+      y += 8;
+      doc.setFontSize(13);
+      doc.setTextColor(138, 104, 152);
+      doc.text('Compatibilidad de Almas', pageW / 2, y, { align: 'center' });
+
+      y += 10;
+      doc.setDrawColor(176, 122, 184);
+      doc.setLineWidth(0.2);
+      doc.line(pageW / 2 - 20, y, pageW / 2 + 20, y);
+
+      y += 10;
+      doc.setFont('times', 'bolditalic');
+      doc.setFontSize(16);
+      doc.setTextColor(58, 32, 72);
+      doc.text(`${reportData.name1} & ${reportData.name2}`, pageW / 2, y, { align: 'center' });
+
+      y += 7;
+      doc.setFont('times', 'normal');
+      doc.setFontSize(11);
+      doc.setTextColor(138, 104, 152);
+      doc.text(`${reportData.sign1} · ${reportData.sign2}`, pageW / 2, y, { align: 'center' });
+
+      y += 4;
+      doc.line(margin, y + 4, pageW - margin, y + 4);
+      y += 14;
+
+      doc.setFontSize(11);
+      doc.setTextColor(58, 32, 72);
+
+      const lines = reportData.reportText.split('\n');
+      for (const line of lines) {
+        if (y > pageH - margin - 10) {
+          doc.addPage();
+          doc.setFillColor(253, 251, 255);
+          doc.rect(0, 0, pageW, pageH, 'F');
+          y = margin + 10;
+        }
+        if (line.startsWith('## ')) {
+          y += 4;
+          doc.setFont('times', 'bolditalic');
+          doc.setFontSize(13);
+          doc.setTextColor(176, 122, 184);
+          doc.text(line.replace('## ', ''), margin, y);
+          y += 8;
+          doc.setFont('times', 'normal');
+          doc.setFontSize(11);
+          doc.setTextColor(58, 32, 72);
+        } else if (line.trim() === '') {
+          y += 4;
+        } else {
+          const cleanLine = line.replace(/\*\*(.+?)\*\*/g, '$1');
+          const wrapped = doc.splitTextToSize(cleanLine, contentW);
+          for (const wline of wrapped) {
+            if (y > pageH - margin - 10) {
+              doc.addPage();
+              doc.setFillColor(253, 251, 255);
+              doc.rect(0, 0, pageW, pageH, 'F');
+              y = margin + 10;
+            }
+            doc.text(wline, margin, y);
+            y += 6;
+          }
+        }
+      }
+
+      doc.setDrawColor(176, 122, 184);
+      doc.setLineWidth(0.2);
+      doc.line(margin, pageH - 18, pageW - margin, pageH - 18);
+      doc.setFont('times', 'italic');
+      doc.setFontSize(9);
+      doc.setTextColor(192, 160, 200);
+      doc.text('BSecret · Astrología Psicológica · bsecret.es', pageW / 2, pageH - 12, { align: 'center' });
+
+      const filename = `BSecret-Compatibilidad-${reportData.name1}-${reportData.name2}.pdf`.replace(/\s+/g, '-');
+      doc.save(filename);
+    }
+
+    function resetForm() {
+      document.getElementById('resultView').style.display = 'none';
+      document.getElementById('formView').style.display = 'block';
+      reportData = null;
+    }
+  </script>
+</body>
+</html>
