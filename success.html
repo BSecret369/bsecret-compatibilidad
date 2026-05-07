@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BSecret · Tu informe está listo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- Copia aquí todo el bloque <style> de index.html -->
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-eyebrow">✦ Astrología Psicológica ✦</div>
+      <div class="header-title">BSecret</div>
+      <div class="divider"></div>
+    </div>
+
+    <div id="loadingView">
+      <div class="loading-state">
+        <div class="loading-symbol">✦</div>
+        <div class="loading-text">Pago confirmado · Generando tu informe...</div>
+        <div class="loading-sub">Las estrellas están hablando</div>
+        <div class="progress-bar"><div class="progress-fill"></div></div>
+      </div>
+    </div>
+
+    <div id="resultView" style="display:none;">
+      <div class="result-header">
+        <div class="result-eyebrow">✦ Tu informe de compatibilidad ✦</div>
+        <div class="result-title" id="resultTitle"></div>
+        <div class="result-names" id="resultNames"></div>
+        <div class="divider"></div>
+      </div>
+      <div class="result-content" id="resultContent"></div>
+      <button class="btn-primary" onclick="downloadPDF()">✦ Descargar informe en PDF ✦</button>
+      <a href="/" style="display:block;text-align:center;margin-top:12px;color:var(--text-dim);font-size:13px;">Hacer otro informe</a>
+    </div>
+
+    <div id="errorView" style="display:none;">
+      <div class="error-box visible" id="errorMsg"></div>
+      <a href="/" class="btn-secondary" style="display:block;text-align:center;margin-top:16px;">Volver al inicio</a>
+    </div>
+  </div>
+
+  <script>
+    let reportData = null;
+
+    // Pega aquí las funciones getSign(), formatReportHTML(), downloadPDF() de index.html
+
+    async function init() {
+      const params = new URLSearchParams(window.location.search);
+      const sessionId = params.get('session_id');
+      if (!sessionId) return showError('Sesión no válida.');
+
+      try {
+        // 1. Recuperar datos del pago
+        const sessionRes = await fetch(`/api/get-session?session_id=${sessionId}`);
+        if (!sessionRes.ok) throw new Error('Pago no verificado');
+        const { metadata } = await sessionRes.json();
+
+        reportData = metadata;
+
+        // 2. Generar informe
+        const reportRes = await fetch('/api/report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(metadata)
+        });
+        const result = await reportRes.json();
+        if (!result.text) throw new Error('Sin respuesta');
+
+        reportData.reportText = result.text;
+        reportData.sign1 = result.sign1;
+        reportData.sign2 = result.sign2;
+
+        // 3. Guardar email
+        try {
+          await fetch('/api/save-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: metadata.email, name: metadata.name1 })
+          });
+        } catch(e) {}
+
+        showResult(result.text, result.sign1, result.sign2);
+
+      } catch(err) {
+        showError('Error al generar el informe. Escríbenos a hola@bsecret.es con tu número de pedido.');
+      }
+    }
+
+    function showResult(text, sign1, sign2) {
+      document.getElementById('loadingView').style.display = 'none';
+      document.getElementById('resultView').style.display = 'block';
+      document.getElementById('resultTitle').textContent = `${reportData.name1} & ${reportData.name2}`;
+      document.getElementById('resultNames').textContent = `${sign1} · ${sign2}`;
+      document.getElementById('resultContent').innerHTML = formatReportHTML(text);
+    }
+
+    function showError(msg) {
+      document.getElementById('loadingView').style.display = 'none';
+      document.getElementById('errorView').style.display = 'block';
+      document.getElementById('errorMsg').textContent = msg;
+    }
+
+    init();
+  </script>
+</body>
+</html>
