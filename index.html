@@ -238,23 +238,47 @@
       return 'Capricornio';
     }
 
-    function handleGenerate() {
-      const name1 = document.getElementById('name1').value.trim();
-      const date1 = document.getElementById('date1').value;
-      const time1 = document.getElementById('time1').value;
-      const place1 = document.getElementById('place1').value.trim();
-      const name2 = document.getElementById('name2').value.trim();
-      const date2 = document.getElementById('date2').value;
-      const time2 = document.getElementById('time2').value;
-      const place2 = document.getElementById('place2').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const errorBox = document.getElementById('errorBox');
+   async function handleGenerate() {
+  const name1 = document.getElementById('name1').value.trim();
+  const date1 = document.getElementById('date1').value;
+  const time1 = document.getElementById('time1').value;
+  const place1 = document.getElementById('place1').value.trim();
+  const name2 = document.getElementById('name2').value.trim();
+  const date2 = document.getElementById('date2').value;
+  const time2 = document.getElementById('time2').value;
+  const place2 = document.getElementById('place2').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const errorBox = document.getElementById('errorBox');
 
-      if (!name1 || !date1 || !place1 || !name2 || !date2 || !place2 || !email) {
-        errorBox.textContent = 'Por favor, completa todos los campos obligatorios.';
-        errorBox.classList.add('visible');
-        return;
-      }
+  if (!name1 || !date1 || !place1 || !name2 || !date2 || !place2 || !email) {
+    errorBox.textContent = 'Por favor, completa todos los campos obligatorios.';
+    errorBox.classList.add('visible');
+    return;
+  }
+
+  errorBox.classList.remove('visible');
+  document.querySelector('.btn-primary').disabled = true;
+  document.querySelector('.btn-primary').textContent = 'Redirigiendo al pago...';
+
+  try {
+    const res = await fetch('/api/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name1, date1, time1, place1, name2, date2, time2, place2, email })
+    });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      throw new Error('Sin URL de pago');
+    }
+  } catch(err) {
+    errorBox.textContent = 'Error al conectar con el pago. Inténtalo de nuevo.';
+    errorBox.classList.add('visible');
+    document.querySelector('.btn-primary').disabled = false;
+    document.querySelector('.btn-primary').textContent = '✦ Revelar nuestra compatibilidad ✦';
+  }
+}
 
       errorBox.classList.remove('visible');
       reportData = { name1, date1, time1, place1, name2, date2, time2, place2, email };
