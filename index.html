@@ -280,16 +280,7 @@
   }
 }
 
-      errorBox.classList.remove('visible');
-      reportData = { name1, date1, time1, place1, name2, date2, time2, place2, email };
-
-      document.getElementById('formView').style.display = 'none';
-      document.getElementById('loadingView').style.display = 'block';
-
-      generateReport(reportData);
-    }
-
-    async function generateReport(data) {
+          async function generateReport(data) {
       try {
         const res = await fetch('/api/report', {
           method: 'POST',
