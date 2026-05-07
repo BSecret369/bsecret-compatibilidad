@@ -71,7 +71,11 @@ Escribe en tono íntimo, cálido y profundo. Usa metáforas del alma, referencia
     });
 
     const data = await response.json();
-  const text = data.content?.[0]?.text || '';
+  const text = data.content?.[0]?.text || data.content?.[0]?.text || '';
+if (!text) {
+  console.log('Sin texto, data:', JSON.stringify(data).substring(0, 300));
+  return res.status(200).json({ text: 'error_no_text', sign1, sign2 });
+}
 console.log('data completa:', JSON.stringify(data).substring(0, 200));
     console.log('Respuesta:', text.substring(0, 100));
     res.status(200).json({ text, sign1, sign2 });
