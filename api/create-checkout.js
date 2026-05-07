@@ -18,7 +18,7 @@ export default async function handler(req, res) {
       'mode': 'payment',
       'customer_email': email,
       'line_items[0][price_data][currency]': 'eur',
-      'line_items[0][price_data][unit_amount]': '1495',
+      'line_items[0][quantity]': '1',
       'line_items[0][price_data][product_data][name]': '✦ Informe de Compatibilidad BSecret',
       'line_items[0][price_data][product_data][description]': `${name1} & ${name2} · Astrología Psicológica`,
       'metadata[name1]': name1,
