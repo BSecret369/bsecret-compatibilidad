@@ -37,7 +37,9 @@ export default async function handler(req, res) {
 
   const session = await response.json();
 
+console.log('Respuesta Stripe:', JSON.stringify(session).substring(0, 300));
   if (session.error) {
+    console.log('Error Stripe:', session.error);
     return res.status(500).json({ error: session.error.message });
   }
 
